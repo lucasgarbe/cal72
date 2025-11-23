@@ -1,0 +1,28 @@
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import type { LayoutProps } from './$types';
+	import { Calendar, DayGrid, TimeGrid, Interaction } from '@event-calendar/core';
+
+	let { data }: LayoutProps = $props();
+
+	let options = $state({
+		view: 'dayGridMonth',
+		events: data.events,
+		firstDay: 1,
+		dateClick: (info) => {
+			console.log(`Clicked on date: ${JSON.stringify(info.date)}`);
+			goto(`/create?date=${info.dateStr}`);
+		},
+		eventClick: (info) => {
+			console.log('Event clicked', info.event);
+			goto(`/events/${info?.event?.id}`);
+		}
+	});
+</script>
+
+<section>
+	<button onclick={() => (options.view = 'dayGridMonth')}>Month</button>
+	<button onclick={() => (options.view = 'timeGridWeek')}>Week</button>
+
+	<Calendar plugins={[DayGrid, TimeGrid, Interaction]} {options} />
+</section>
