@@ -20,9 +20,11 @@
 	});
 </script>
 
-<section>
-	<button onclick={() => (options.view = 'dayGridMonth')}>Month</button>
-	<button onclick={() => (options.view = 'timeGridWeek')}>Week</button>
+<section class="calendar">
+	<div class="viewcontroll">
+		<button onclick={() => (options.view = 'dayGridMonth')}>Month</button>
+		<button onclick={() => (options.view = 'timeGridWeek')}>Week</button>
+	</div>
 
 	<Calendar plugins={[DayGrid, TimeGrid, Interaction]} {options} />
 </section>

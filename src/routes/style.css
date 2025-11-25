@@ -2,10 +2,10 @@
 	--color-foreground: black;
 	--color-background: white;
 	--color-background-alt: lightgray;
-	--color-success-color: seagreen;
-	--color-success-color-light: color-mix(in oklab, var(--color-success-color) 20%, var(--color-background) 80%);
-	--color-error-color: tomato;
-	--color-error-color-light: color-mix(in oklab, var(--color-error-color) 20%, var(--color-background) 80%);
+	--color-success: seagreen;
+	--color-success-light: color-mix(in oklab, var(--color-success) 20%, var(--color-background) 80%);
+	--color-error: tomato;
+	--color-error-light: color-mix(in oklab, var(--color-error) 20%, var(--color-background) 80%);
 	--space: 1rem;
 	--radius: calc(var(--space) / 4);
 	--content-width: 80ch;
@@ -37,7 +37,7 @@ button {
 	font-weight: 600;
 
 	&.success {
-		background-color: var(--color-success-color);
+		background-color: var(--color-success);
 		color: var(--color-background);
 	}
 }
@@ -66,10 +66,30 @@ header {
 		gap: var(--space);
 	}
 
-	& > p {
+	& > .subscriptionlink {
 		flex-grow: 1;
 		text-align: right;
+
+		& a {
+			cursor: copy;
+			position: relative;
+		}
+
+		.tooltip {
+			position: absolute;
+			top: 100%;
+			left: 50%;
+			transform: translateX(-50%);
+			background-color: var(--color-success-light);
+			border-radius: var(--radius);
+			border: 2px solid var(--color-success);
+			font-size: .75em;
+			white-space: nowrap;
+			padding: .2em .4em;
+			margin-top: .4em;
+		}
 	}
+
 }
 
 a {
@@ -77,6 +97,26 @@ a {
 	text-decoration: underline;
 	text-underline-offset: .25em;
 	text-decoration-thickness: .1em;
+}
+
+.calendar {
+	position: relative;
+	overflow-x: scroll;
+
+	& .viewcontroll {
+		position: sticky;
+		top: 0;
+	}
+
+	& .ec {
+		min-width: 640px;
+	}
+}
+
+.ec-body .ec-day {
+	aspect-ratio: 1/1;
+	min-height: 100px;
+	overflow-y: scroll;
 }
 
 .create-event {
@@ -99,7 +139,7 @@ a {
 			margin-top: calc(var(--space) / 4);
 
 			&:user-invalid {
-				border-color: var(--color-error-color);
+				border-color: var(--color-error);
 			}
 		}
 
@@ -122,13 +162,13 @@ a {
 		font-weight: 600;
 
 		&.success {
-			background-color: var(--color-success-color-light);
-			border: 2px solid var(--color-success-color);
+			background-color: var(--color-success-light);
+			border: 2px solid var(--color-success);
 		}
 
 		&.error {
-			background-color: var(--color-error-color-light);
-			border: 2px solid var(--color-error-color);
+			background-color: var(--color-error-light);
+			border: 2px solid var(--color-error);
 		}
 	}
 }

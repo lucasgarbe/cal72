@@ -2,6 +2,16 @@
 	import favicon from '$lib/assets/favicon.svg';
 
 	let { children } = $props();
+	let copied = $state(false);
+
+	async function copyToClipboard(e: MouseEvent) {
+		e.preventDefault();
+		navigator.clipboard.writeText(`${window.location.origin}/calendar`);
+		copied = true;
+		setTimeout(() => {
+			copied = false;
+		}, 1200);
+	}
 </script>
 
 <svelte:head>
@@ -17,14 +27,13 @@
 		<a href="/">Calendar</a>
 		<a href="/events">Events</a>
 	</nav>
-	<p>
-		Subscription URL: <a
-			href="/calendar"
-			onclick={(e) => {
-				e.preventDefault();
-				navigator.clipboard.writeText(`${window.location}calendar`);
-			}}>/calendar</a
-		>
+	<p class="subscriptionlink">
+		Subscription URL: <a href="/calendar" onclick={copyToClipboard}>
+			/calendar
+			{#if copied}
+				<span class="tooltip">copied</span>
+			{/if}
+		</a>
 	</p>
 </header>
 
