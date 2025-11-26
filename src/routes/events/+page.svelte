@@ -5,7 +5,7 @@
 	let { data }: LayoutProps = $props();
 </script>
 
-<section class="event-list">
+<main class="event-list">
 	<h1>Event List</h1>
 	{#each data.events as event}
 		<article
@@ -24,4 +24,4 @@
 			<p>{event.description}</p>
 		</article>
 	{/each}
-</section>
+</main>

@@ -22,19 +22,22 @@ html, body {
 
 *, *:before, *:after {
   box-sizing: inherit;
+	margin: 0;
 }
 
-section {
+main {
 	padding-left: var(--space);
 	padding-right: var(--space);
 }
 
-button {
+button, a.button {
 	background-color: var(--color-background);
 	padding: calc(var(--space) / 2) var(--space);
 	border: 2px solid var(--color-foreground);
 	border-radius: var(--radius);
 	font-weight: 600;
+	font-size: inherit;
+	text-decoration: none;
 
 	&.success {
 		background-color: var(--color-success);
@@ -119,7 +122,10 @@ a {
 	overflow-y: scroll;
 }
 
-.create-event {
+.create-event,
+.create-club,
+.event-edit,
+.club-edit {
 	max-width: var(--content-width);
 	margin: 0 auto;
 
@@ -193,11 +199,48 @@ a {
 		border-radius: var(--radius);
 		text-decoration: none;
 		color: inherit;
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--space) / 2);
+
+		& h2 {
+			margin-bottom: calc(var(--space) / 2);
+		}
 	}
 }
 
-.event-details {
+.event-details,
+.club-details {
 	max-width: var(--content-width);
 	margin: 0 auto;
 	padding-top: var(--space);
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--space) / 2);
+}
+
+.club-list {
+	max-width: var(--content-width);
+	margin: 0 auto;
+	padding-top: var(--space);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space);
+
+	& .club-list__item {
+		padding: var(--space);
+		border: 2px solid var(--color-foreground);
+		border-radius: var(--radius);
+		text-decoration: none;
+		color: inherit;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		& label:has(input[type="color"]) {
+			display: flex;
+			align-items: center;
+			gap: calc(var(--space) / 2);
+		}
+	}
 }

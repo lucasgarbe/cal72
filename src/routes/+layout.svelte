@@ -26,6 +26,7 @@
 	<nav>
 		<a href="/">Calendar</a>
 		<a href="/events">Events</a>
+		<a href="/clubs">Clubs</a>
 	</nav>
 	<p class="subscriptionlink">
 		Subscription URL: <a href="/calendar" onclick={copyToClipboard}>
