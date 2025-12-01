@@ -12,13 +12,15 @@
 </script>
 
 <main class="event-details">
-	<h1>{data.event?.title}</h1>
+	<div class="event-details__header">
+		<h1>{data.event?.title}</h1>
 
-	{#if data.club}
-		<div class="event-details__club" style:background-color={data.club.color}>
-			Club: {data.club.name}
-		</div>
-	{/if}
+		{#if data.club}
+			<div class="event-details__club tag" style:border-color={data.club.color}>
+				{data.club.name}
+			</div>
+		{/if}
+	</div>
 
 	<p>
 		<time datetime={data.event?.start}>{formattedTimespan}</time>

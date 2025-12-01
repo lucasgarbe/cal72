@@ -4,7 +4,22 @@ import { eq } from 'drizzle-orm';
 
 export const getAllEvents = async () => {
 	console.log('Fetching all events from the database');
-	const events = await db.select().from(Events);
+	const events = await db
+		.select({
+			id: Events.id,
+			title: Events.title,
+			description: Events.description,
+			start: Events.start,
+			end: Events.end,
+			club: {
+				id: Clubs.id,
+				name: Clubs.name,
+				color: Clubs.color
+			},
+			createdAt: Events.createdAt
+		})
+		.from(Events)
+		.leftJoin(Clubs, eq(Events.club, Clubs.id));
 	console.log('Fetched events:', events);
 	return events;
 };

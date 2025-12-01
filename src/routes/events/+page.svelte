@@ -19,9 +19,15 @@
 				}
 			}}
 		>
-			<h2><a href={`/events/${event.id}`}>{event.title}</a></h2>
+			<div class="event-list__item__header">
+				<h2><a href={`/events/${event.id}`}>{event.title}</a></h2>
+				{#if event.club}
+					<div class="event-list__club tag" style:border-color={event.club.color}>
+						{event.club.name}
+					</div>
+				{/if}
+			</div>
 			<p><time datetime={event.start}>{formatEventTimespan(event.start, event.end, true)}</time></p>
-			<p>{event.description}</p>
 		</article>
 	{/each}
 </main>
