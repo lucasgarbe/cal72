@@ -1,5 +1,6 @@
 :root {
 	--color-foreground: black;
+	--color-foreground-alt: dimgray;
 	--color-background: white;
 	--color-background-alt: lightgray;
 	--color-success: seagreen;
@@ -225,6 +226,10 @@ a {
 	}
 }
 
+.event-list__item time, .event-details time {
+	color: var(--color-foreground-alt);
+}
+
 .event-details,
 .club-details {
 	max-width: var(--content-width);
@@ -241,6 +246,11 @@ a {
 	align-items: center;
 	justify-content: space-between;
 	flex-wrap: wrap;
+}
+
+.event-details__description {
+	margin-top: calc(var(--space) * 2);
+	margin-bottom: calc(var(--space) * 2);
 }
 
 .event-details__actions {

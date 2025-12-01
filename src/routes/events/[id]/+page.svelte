@@ -25,7 +25,8 @@
 	<p>
 		<time datetime={data.event?.start}>{formattedTimespan}</time>
 	</p>
-	<p>{data.event?.description}</p>
+
+	<p class="event-details__description">{data.event?.description}</p>
 
 	<div class="event-details__actions">
 		<a class="button" href={`/events/${data.event?.id}/edit`}>Edit</a>
