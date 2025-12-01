@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { LayoutProps } from './$types';
+	import type { PageData } from './$types';
+	import { formatEventTimespan } from '$lib/utils/dateFormat';
 
-	let { data }: LayoutProps = $props();
+	let { data }: { data: PageData } = $props();
 </script>
 
 <main class="event-list">
@@ -14,13 +15,12 @@
 			onclick={() => goto(`/events/${event.id}`)}
 			onkeydown={(e) => {
 				if (e.key === 'Enter' || e.key === ' ') {
-					goto(`/events/&{event.id}`);
+					goto(`/events/${event.id}`);
 				}
 			}}
 		>
 			<h2><a href={`/events/${event.id}`}>{event.title}</a></h2>
-			<p><time datetime={event.start}>Starts: {event.start}</time></p>
-			<p><time datetime={event.end}>Ends: {event.end}</time></p>
+			<p><time datetime={event.start}>{formatEventTimespan(event.start, event.end, true)}</time></p>
 			<p>{event.description}</p>
 		</article>
 	{/each}

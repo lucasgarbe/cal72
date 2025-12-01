@@ -1,11 +1,14 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
 	import ConfirmationButton from '$lib/components/ConfirmationButton.svelte';
+	import { formatEventTimespan } from '$lib/utils/dateFormat';
 
 	let { data }: PageProps = $props();
 
-	const startDate = new Date(data.event?.start).toLocaleString();
-	const endDate = new Date(data.event?.end).toLocaleString();
+	const formattedTimespan =
+		data.event?.start && data.event?.end
+			? formatEventTimespan(data.event.start, data.event.end, false)
+			: '';
 </script>
 
 <main class="event-details">
@@ -18,9 +21,7 @@
 	{/if}
 
 	<p>
-		<time datetime={data.event?.start}>{startDate}</time>
-		-
-		<time datetime={data.event?.end}>{endDate}</time>
+		<time datetime={data.event?.start}>{formattedTimespan}</time>
 	</p>
 	<p>{data.event?.description}</p>
 
