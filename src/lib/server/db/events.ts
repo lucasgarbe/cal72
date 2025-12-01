@@ -7,14 +7,18 @@ export const getAllEvents = async () => {
 	const events = await db.select().from(Events);
 	console.log('Fetched events:', events);
 	return events;
-}
+};
 
 export const getEvent = async (id: string) => {
 	console.log(`Fetching event with id: ${id}`);
-	const event = await db.select().from(Events).where(eq(Events.id, parseInt(id))).get();
+	const event = await db
+		.select()
+		.from(Events)
+		.where(eq(Events.id, parseInt(id)))
+		.get();
 	console.log('Fetched event:', event);
 	return event;
-}
+};
 
 export const createEvent = (data: any) => {
 	return db.insert(Events).values(data).returning().get();
@@ -25,30 +29,51 @@ export const getAllClubs = async () => {
 	const clubs = await db.select().from(Clubs);
 	console.log('Fetched clubs:', clubs);
 	return clubs;
-}
+};
 
 export const getClub = async (id: string) => {
 	console.log(`Fetching event with id: ${id}`);
-	const club = await db.select().from(Clubs).where(eq(Clubs.id, parseInt(id))).get();
+	const club = await db
+		.select()
+		.from(Clubs)
+		.where(eq(Clubs.id, parseInt(id)))
+		.get();
 	console.log('Fetched event:', club);
 	return club;
-}
+};
 
 export const createClub = (data: any) => {
 	return db.insert(Clubs).values(data).returning().get();
 };
 
 export const updateClub = (data: any) => {
-	return db.update(Clubs)
+	return db
+		.update(Clubs)
 		.set({ name: data.name, color: data.color })
 		.where(eq(Clubs.id, data.id))
 		.returning()
 		.get();
-}
+};
 
 export const deleteClub = async (id: number) => {
-	return db.delete(Clubs)
-		.where(eq(Clubs.id, id))
+	return db.delete(Clubs).where(eq(Clubs.id, id)).returning().get();
+};
+
+export const updateEvent = (data: any) => {
+	return db
+		.update(Events)
+		.set({
+			title: data.title,
+			description: data.description,
+			start: data.start,
+			end: data.end,
+			club: data.club
+		})
+		.where(eq(Events.id, data.id))
 		.returning()
 		.get();
-}
+};
+
+export const deleteEvent = async (id: number) => {
+	return db.delete(Events).where(eq(Events.id, id)).returning().get();
+};

@@ -1,9 +1,10 @@
-import type { Actions, PageServerLoad } from './$types';
+import { getEvent, updateEvent, getAllClubs } from '$lib/server/db/events';
 import { fail } from '@sveltejs/kit';
-import { createEvent, getAllClubs } from '$lib/server/db/events';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ params }) => {
 	return {
+		event: await getEvent(params.id),
 		clubs: await getAllClubs()
 	};
 };
@@ -16,12 +17,13 @@ export const actions: Actions = {
 		const start = formData.get('start') as string;
 		const end = formData.get('end') as string;
 		const clubId = formData.get('club') as string;
+		const id = event.params.id;
 
 		if (!title || !start || !end) {
 			console.error('Form submission error: Missing fields');
 			return fail(400, {
 				success: false,
-				message: 'Missing field.',
+				message: 'Missing required fields.',
 				title,
 				description,
 				start,
@@ -50,21 +52,21 @@ export const actions: Actions = {
 				club: clubId
 			});
 
-			createEvent({
+			updateEvent({
+				id,
 				title,
 				description,
-				start: start,
-				end: end,
-				club: clubId ? parseInt(clubId) : null,
-				createdAt: Date.now()
+				start,
+				end,
+				club: clubId ? parseInt(clubId) : null
 			});
 
-			return { success: true, message: `Event created successfully: ${title}` };
+			return { success: true, message: `Event updated successfully: ${title}` };
 		} catch (error) {
-			console.error('Error creating event:', error);
+			console.error('Error updating event:', error);
 			return fail(400, {
 				success: false,
-				message: 'Failed to create event.',
+				message: 'Failed to update event.',
 				title,
 				description,
 				start,

@@ -219,6 +219,12 @@ a {
 	gap: calc(var(--space) / 2);
 }
 
+.event-details__actions {
+	display: flex;
+	gap: var(--space);
+	justify-content: flex-end;
+}
+
 .club-list {
 	max-width: var(--content-width);
 	margin: 0 auto;
