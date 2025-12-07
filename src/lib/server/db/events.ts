@@ -26,17 +26,18 @@ export const getAllEvents = async () => {
 
 export const getEvent = async (id: string) => {
 	console.log(`Fetching event with id: ${id}`);
-	const event = await db
+	const events = await db
 		.select()
 		.from(Events)
-		.where(eq(Events.id, parseInt(id)))
-		.get();
+		.where(eq(Events.id, parseInt(id)));
+	const event = events[0];
 	console.log('Fetched event:', event);
 	return event;
 };
 
-export const createEvent = (data: any) => {
-	return db.insert(Events).values(data).returning().get();
+export const createEvent = async (data: any) => {
+	const result = await db.insert(Events).values(data).returning();
+	return result[0];
 };
 
 export const getAllClubs = async () => {
@@ -48,34 +49,36 @@ export const getAllClubs = async () => {
 
 export const getClub = async (id: string) => {
 	console.log(`Fetching event with id: ${id}`);
-	const club = await db
+	const clubs = await db
 		.select()
 		.from(Clubs)
-		.where(eq(Clubs.id, parseInt(id)))
-		.get();
+		.where(eq(Clubs.id, parseInt(id)));
+	const club = clubs[0];
 	console.log('Fetched event:', club);
 	return club;
 };
 
-export const createClub = (data: any) => {
-	return db.insert(Clubs).values(data).returning().get();
+export const createClub = async (data: any) => {
+	const result = await db.insert(Clubs).values(data).returning();
+	return result[0];
 };
 
-export const updateClub = (data: any) => {
-	return db
+export const updateClub = async (data: any) => {
+	const result = await db
 		.update(Clubs)
 		.set({ name: data.name, color: data.color })
 		.where(eq(Clubs.id, data.id))
-		.returning()
-		.get();
+		.returning();
+	return result[0];
 };
 
 export const deleteClub = async (id: number) => {
-	return db.delete(Clubs).where(eq(Clubs.id, id)).returning().get();
+	const result = await db.delete(Clubs).where(eq(Clubs.id, id)).returning();
+	return result[0];
 };
 
-export const updateEvent = (data: any) => {
-	return db
+export const updateEvent = async (data: any) => {
+	const result = await db
 		.update(Events)
 		.set({
 			title: data.title,
@@ -85,10 +88,11 @@ export const updateEvent = (data: any) => {
 			club: data.club
 		})
 		.where(eq(Events.id, data.id))
-		.returning()
-		.get();
+		.returning();
+	return result[0];
 };
 
 export const deleteEvent = async (id: number) => {
-	return db.delete(Events).where(eq(Events.id, id)).returning().get();
+	const result = await db.delete(Events).where(eq(Events.id, id)).returning();
+	return result[0];
 };

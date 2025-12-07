@@ -55,8 +55,7 @@ export const actions: Actions = {
 				description,
 				start: start,
 				end: end,
-				club: clubId ? parseInt(clubId) : null,
-				createdAt: Date.now()
+				club: clubId ? parseInt(clubId) : null
 			});
 
 			return { success: true, message: `Event created successfully: ${title}` };
