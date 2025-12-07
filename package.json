@@ -7,6 +7,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
+		"start": "pnpm run db:push && node --env-file=.env build",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -41,6 +42,7 @@
 		"vite": "^7.2.2"
 	},
 	"dependencies": {
-		"better-sqlite3": "^12.4.1"
+		"@libsql/client": "^0.15.15",
+		"postgres": "^3.4.7"
 	}
 }
