@@ -1,7 +1,7 @@
 import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const Events = pgTable('events', {
-	id: serial('id').primaryKey().unique().notNull(),
+	id: serial('id').primaryKey().notNull(),
 	title: text('title').notNull().default(''),
 	description: text('description').notNull().default(''),
 	start: text('start_time').notNull(),
@@ -11,7 +11,7 @@ export const Events = pgTable('events', {
 });
 
 export const Clubs = pgTable('clubs', {
-	id: serial('id').primaryKey().unique().notNull(),
+	id: serial('id').primaryKey().notNull(),
 	name: text('name').notNull().default(''),
 	color: text('color')
 });
