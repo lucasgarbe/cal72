@@ -105,6 +105,7 @@ header {
 			white-space: nowrap;
 			padding: 0.2em 0.4em;
 			margin-top: 0.4em;
+			z-index: 99;
 		}
 	}
 }

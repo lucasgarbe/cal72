@@ -7,9 +7,6 @@
 <main class="create-event">
 	<h1>Create New Event</h1>
 	<form method="post">
-		{#if form}
-			<pre>{JSON.stringify(form, null, 2)}</pre>
-		{/if}
 		{#if form?.success == false}<p class="alert error">{form?.message}</p>{/if}
 		{#if form?.success}<p class="alert success">{form?.message}</p>{/if}
 
