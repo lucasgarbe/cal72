@@ -1,6 +1,6 @@
 import { db } from './index';
 import { Clubs, Events } from './schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 export const getAllEvents = async () => {
 	console.log('Fetching all events from the database');
@@ -16,7 +16,9 @@ export const getAllEvents = async () => {
 				name: Clubs.name,
 				color: Clubs.color
 			},
-			createdAt: Events.createdAt
+			createdAt: Events.createdAt,
+			updatedAt: Events.updatedAt,
+			sequence: Events.sequence
 		})
 		.from(Events)
 		.leftJoin(Clubs, eq(Events.club, Clubs.id));
@@ -85,7 +87,8 @@ export const updateEvent = async (data: any) => {
 			description: data.description,
 			start: data.start,
 			end: data.end,
-			club: data.club
+			club: data.club,
+			sequence: sql`${Events.sequence} + 1`
 		})
 		.where(eq(Events.id, data.id))
 		.returning();

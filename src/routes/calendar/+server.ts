@@ -8,11 +8,39 @@ export const GET: RequestHandler = async () => {
 	return new Response(ical, {
 		headers: {
 			'Content-Type': 'text/calendar; charset=utf-8',
-			'Cache-Control': 'no-cache, must-revalidate',
-			'Content-Disposition': 'attachment; filename="calendar.ics"'
+			'Cache-Control': 'private, max-age=300',
+			'Content-Disposition': 'attachment; filename="cal72.ics"',
+			'X-Published-TTL': 'PT15M'
 		}
 	});
 };
+
+// Helper function to format Date/timestamp to iCal format (YYYYMMDDTHHMMSSZ)
+function formatICalTimestamp(date: Date | string): string {
+	const d = typeof date === 'string' ? new Date(date) : date;
+	return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+// Helper function to escape special characters per RFC 5545
+function escapeICalText(text: string): string {
+	if (!text) return '';
+	return text
+		.replace(/\\/g, '\\\\')  // Backslash must be escaped first
+		.replace(/;/g, '\\;')     // Semicolon
+		.replace(/,/g, '\\,')     // Comma
+		.replace(/\n/g, '\\n');   // Newline
+}
+
+// Format datetime string for iCalendar (local time without conversion)
+function formatDateTime(dateStr: string): string | null {
+	// Parse the ISO string components directly (seconds are optional)
+	const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+	if (!match) return null;
+
+	const [_, year, month, day, hours, minutes, seconds] = match;
+	const sec = seconds || '00'; // Default to 00 if seconds not provided
+	return `${year}${month}${day}T${hours}${minutes}${sec}`;
+}
 
 async function generateICal() {
 	const events = await getAllEvents();
@@ -21,6 +49,7 @@ async function generateICal() {
 		'BEGIN:VCALENDAR',
 		'VERSION:2.0',
 		'PRODID:-//CAL72//Shared Calendar//EN',
+		'METHOD:PUBLISH',
 		'CALSCALE:GREGORIAN',
 		'X-WR-CALNAME:Shared Calendar',
 		'X-WR-TIMEZONE:Europe/Berlin',
@@ -45,28 +74,41 @@ async function generateICal() {
 	];
 
 	events.forEach((event) => {
-		// Format datetime string for iCalendar using standard Date functions
-		const formatDateTime = (dateStr: string) => {
-			const date = new Date(dateStr);
+		// Validate required fields
+		if (!event.id || !event.title || !event.start || !event.end) {
+			console.warn(`Skipping event with missing fields:`, event.id);
+			return;
+		}
 
-			// Format as YYYYMMDDTHHMMSS
-			const year = date.getFullYear();
-			const month = String(date.getMonth() + 1).padStart(2, '0');
-			const day = String(date.getDate()).padStart(2, '0');
-			const hours = String(date.getHours()).padStart(2, '0');
-			const minutes = String(date.getMinutes()).padStart(2, '0');
-			const seconds = String(date.getSeconds()).padStart(2, '0');
+		// Validate and format dates
+		const startFormatted = formatDateTime(event.start);
+		const endFormatted = formatDateTime(event.end);
 
-			return `${year}${month}${day}T${hours}${minutes}${seconds}`;
-		};
+		if (!startFormatted || !endFormatted) {
+			console.warn(`Skipping event ${event.id} with invalid date format - start: "${event.start}", end: "${event.end}"`);
+			return;
+		}
+
+		// Validate start < end
+		const startDate = new Date(event.start);
+		const endDate = new Date(event.end);
+		if (startDate >= endDate) {
+			console.warn(`Skipping event ${event.id} with start >= end`);
+			return;
+		}
 
 		lines.push('BEGIN:VEVENT');
 		lines.push(`UID:${event.id}@cal72`);
-		lines.push(`DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`);
-		lines.push(`DTSTART;TZID=Europe/Berlin:${formatDateTime(event.start)}`);
-		lines.push(`DTEND;TZID=Europe/Berlin:${formatDateTime(event.end)}`);
-		lines.push(`SUMMARY:${event.title}`);
-		lines.push(`DESCRIPTION:${event.description}`);
+		// Use createdAt for stable DTSTAMP
+		lines.push(`DTSTAMP:${formatICalTimestamp(event.createdAt)}`);
+		lines.push(`SEQUENCE:${event.sequence || 0}`);
+		if (event.updatedAt) {
+			lines.push(`LAST-MODIFIED:${formatICalTimestamp(event.updatedAt)}`);
+		}
+		lines.push(`DTSTART;TZID=Europe/Berlin:${startFormatted}`);
+		lines.push(`DTEND;TZID=Europe/Berlin:${endFormatted}`);
+		lines.push(`SUMMARY:${escapeICalText(event.title)}${event.club && " [" + escapeICalText(event.club.name)}]`);
+		lines.push(`DESCRIPTION:${escapeICalText(event.description)}`);
 		lines.push('END:VEVENT');
 	});
 
