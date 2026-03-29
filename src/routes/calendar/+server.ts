@@ -107,7 +107,7 @@ async function generateICal() {
 		}
 		lines.push(`DTSTART;TZID=Europe/Berlin:${startFormatted}`);
 		lines.push(`DTEND;TZID=Europe/Berlin:${endFormatted}`);
-		lines.push(`SUMMARY:${escapeICalText(event.title)}${event.club && " [" + escapeICalText(event.club.name)}]`);
+		lines.push(`SUMMARY:${escapeICalText(event.title)}${event.club != null && " [" + escapeICalText(event.club.name) + "]"}`);
 		lines.push(`DESCRIPTION:${escapeICalText(event.description)}`);
 		lines.push('END:VEVENT');
 	});
