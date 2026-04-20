@@ -21,6 +21,26 @@ function formatICalTimestamp(date: Date | string): string {
 	return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 }
 
+// Fold long lines per RFC 5545 §3.1 (max 75 octets per line)
+function foldLine(line: string): string {
+	const encoder = new TextEncoder();
+	if (encoder.encode(line).length <= 75) return line;
+
+	const chunks: string[] = [];
+	let current = '';
+	for (const char of line) {
+		const candidate = current + char;
+		if (encoder.encode(candidate).length > (chunks.length === 0 ? 75 : 74)) {
+			chunks.push(current);
+			current = ' ' + char;
+		} else {
+			current = candidate;
+		}
+	}
+	if (current) chunks.push(current);
+	return chunks.join('\r\n');
+}
+
 // Helper function to escape special characters per RFC 5545
 function escapeICalText(text: string): string {
 	if (!text) return '';
@@ -114,5 +134,5 @@ async function generateICal() {
 
 	lines.push('END:VCALENDAR');
 
-	return lines.join('\r\n');
+	return lines.map(foldLine).join('\r\n') + '\r\n';
 }
