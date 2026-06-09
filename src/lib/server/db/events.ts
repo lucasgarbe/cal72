@@ -21,7 +21,8 @@ export const getAllEvents = async () => {
 			sequence: Events.sequence
 		})
 		.from(Events)
-		.leftJoin(Clubs, eq(Events.club, Clubs.id));
+		.leftJoin(Clubs, eq(Events.club, Clubs.id))
+		.orderBy(Events.start);
 	console.log('Fetched events:', events);
 	return events;
 };
