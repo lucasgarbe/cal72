@@ -9,16 +9,14 @@ export const GET: RequestHandler = async () => {
 		headers: {
 			'Content-Type': 'text/calendar; charset=utf-8',
 			'Cache-Control': 'private, max-age=300',
-			'Content-Disposition': 'attachment; filename="cal72.ics"',
 			'X-Published-TTL': 'PT15M'
 		}
 	});
 };
 
-// Helper function to format Date/timestamp to iCal format (YYYYMMDDTHHMMSSZ)
-function formatICalTimestamp(date: Date | string): string {
-	const d = typeof date === 'string' ? new Date(date) : date;
-	return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+// Helper function to format Date to iCal format (YYYYMMDDTHHMMSSZ)
+function formatICalTimestamp(date: Date): string {
+	return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 }
 
 // Fold long lines per RFC 5545 §3.1 (max 75 octets per line)
@@ -63,7 +61,12 @@ function formatDateTime(dateStr: string): string | null {
 }
 
 async function generateICal() {
-	const events = await getAllEvents();
+	const allEvents = await getAllEvents();
+	const now = new Date();
+
+	// Filter to a reasonable time range: 1 year ago to 2 years ahead
+	const rangeStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+	const rangeEnd = new Date(now.getFullYear() + 2, now.getMonth(), now.getDate());
 
 	const lines = [
 		'BEGIN:VCALENDAR',
@@ -74,6 +77,7 @@ async function generateICal() {
 		'X-WR-CALNAME:Shared Calendar',
 		'X-WR-TIMEZONE:Europe/Berlin',
 		'X-WR-CALDESC:Shared Calendar for AL72',
+		`DTSTAMP:${formatICalTimestamp(now)}`,
 		'BEGIN:VTIMEZONE',
 		'TZID:Europe/Berlin',
 		'BEGIN:DAYLIGHT',
@@ -93,11 +97,11 @@ async function generateICal() {
 		'END:VTIMEZONE'
 	];
 
-	events.forEach((event) => {
+	for (const event of allEvents) {
 		// Validate required fields
 		if (!event.id || !event.title || !event.start || !event.end) {
 			console.warn(`Skipping event with missing fields:`, event.id);
-			return;
+			continue;
 		}
 
 		// Validate and format dates
@@ -106,7 +110,7 @@ async function generateICal() {
 
 		if (!startFormatted || !endFormatted) {
 			console.warn(`Skipping event ${event.id} with invalid date format - start: "${event.start}", end: "${event.end}"`);
-			return;
+			continue;
 		}
 
 		// Validate start < end
@@ -114,23 +118,28 @@ async function generateICal() {
 		const endDate = new Date(event.end);
 		if (startDate >= endDate) {
 			console.warn(`Skipping event ${event.id} with start >= end`);
-			return;
+			continue;
+		}
+
+		// Skip events outside the date range
+		if (startDate > rangeEnd || endDate < rangeStart) {
+			console.log(`Skipping event ${event.id} outside date range`);
+			continue;
 		}
 
 		lines.push('BEGIN:VEVENT');
 		lines.push(`UID:${event.id}@cal72`);
-		// Use createdAt for stable DTSTAMP
-		lines.push(`DTSTAMP:${formatICalTimestamp(event.createdAt)}`);
+		lines.push(`DTSTAMP:${formatICalTimestamp(now)}`);
 		lines.push(`SEQUENCE:${event.sequence || 0}`);
 		if (event.updatedAt) {
-			lines.push(`LAST-MODIFIED:${formatICalTimestamp(event.updatedAt)}`);
+			lines.push(`LAST-MODIFIED:${formatICalTimestamp(new Date(event.updatedAt))}`);
 		}
 		lines.push(`DTSTART;TZID=Europe/Berlin:${startFormatted}`);
 		lines.push(`DTEND;TZID=Europe/Berlin:${endFormatted}`);
 		lines.push(`SUMMARY:${escapeICalText(event.title)}${event.club ? " [" + escapeICalText(event.club.name) + "]" : ""}`);
 		lines.push(`DESCRIPTION:${escapeICalText(event.description)}`);
 		lines.push('END:VEVENT');
-	});
+	}
 
 	lines.push('END:VCALENDAR');
 
