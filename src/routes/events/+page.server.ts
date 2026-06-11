@@ -1,8 +1,14 @@
-import { getAllEvents } from "$lib/server/db/events";
+import { getFutureEvents, getPastEvents } from "$lib/server/db/events";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async () => {
+	const [futureEvents, pastEvents] = await Promise.all([
+		getFutureEvents(),
+		getPastEvents()
+	]);
+
 	return {
-		events: await getAllEvents()
+		futureEvents,
+		pastEvents
 	};
 }

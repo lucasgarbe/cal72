@@ -1,6 +1,6 @@
 import { db } from './index';
 import { Clubs, Events } from './schema';
-import { eq, sql } from 'drizzle-orm';
+import { desc, eq, gte, lt, sql } from 'drizzle-orm';
 
 export const getAllEvents = async () => {
 	console.log('Fetching all events from the database');
@@ -24,6 +24,42 @@ export const getAllEvents = async () => {
 		.leftJoin(Clubs, eq(Events.club, Clubs.id));
 	console.log('Fetched events:', events);
 	return events;
+};
+
+const eventSelect = {
+	id: Events.id,
+	title: Events.title,
+	description: Events.description,
+	start: Events.start,
+	end: Events.end,
+	club: {
+		id: Clubs.id,
+		name: Clubs.name,
+		color: Clubs.color
+	},
+	createdAt: Events.createdAt,
+	updatedAt: Events.updatedAt,
+	sequence: Events.sequence
+};
+
+export const getFutureEvents = async () => {
+	const now = new Date().toISOString();
+	return await db
+		.select(eventSelect)
+		.from(Events)
+		.leftJoin(Clubs, eq(Events.club, Clubs.id))
+		.where(gte(Events.end, now))
+		.orderBy(Events.start);
+};
+
+export const getPastEvents = async () => {
+	const now = new Date().toISOString();
+	return await db
+		.select(eventSelect)
+		.from(Events)
+		.leftJoin(Clubs, eq(Events.club, Clubs.id))
+		.where(lt(Events.end, now))
+		.orderBy(desc(Events.start));
 };
 
 export const getEvent = async (id: string) => {

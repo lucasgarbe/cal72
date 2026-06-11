@@ -333,6 +333,34 @@ a {
 			flex-wrap: wrap;
 		}
 	}
+}	
+/* details.past-events { */
+/* 	& summary { */
+/* 		max-width: var(--content-width); */
+/* 		margin: 0 auto; */
+/* 		padding: var(--space); */
+/* 		text-decoration: none; */
+/* 		font-weight: bold; */
+/* 		color: inherit; */
+/* 	} */
+/* 	& summary::marker { */
+/* 		content: ""; */
+/* 	} */
+/* } */
+
+.event-list__past {
+	& summary {
+		font-weight: bold;
+		font-size: 1.5em;
+		padding-top:var(--space);
+		padding-bottom:var(--space);
+	}
+
+	&::details-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space);
+	}
 }
 
 .event-list__item time,
