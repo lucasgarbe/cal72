@@ -334,19 +334,6 @@ a {
 		}
 	}
 }	
-/* details.past-events { */
-/* 	& summary { */
-/* 		max-width: var(--content-width); */
-/* 		margin: 0 auto; */
-/* 		padding: var(--space); */
-/* 		text-decoration: none; */
-/* 		font-weight: bold; */
-/* 		color: inherit; */
-/* 	} */
-/* 	& summary::marker { */
-/* 		content: ""; */
-/* 	} */
-/* } */
 
 .event-list__past {
 	& summary {
