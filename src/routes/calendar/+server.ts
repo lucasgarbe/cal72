@@ -43,10 +43,10 @@ function foldLine(line: string): string {
 function escapeICalText(text: string): string {
 	if (!text) return '';
 	return text
-		.replace(/\\/g, '\\\\')  // Backslash must be escaped first
-		.replace(/;/g, '\\;')     // Semicolon
-		.replace(/,/g, '\\,')     // Comma
-		.replace(/\n/g, '\\n');   // Newline
+		.replace(/\\/g, '\\\\') // Backslash must be escaped first
+		.replace(/;/g, '\\;') // Semicolon
+		.replace(/,/g, '\\,') // Comma
+		.replace(/\n/g, '\\n'); // Newline
 }
 
 // Format datetime string for iCalendar (local time without conversion)
@@ -55,18 +55,19 @@ function formatDateTime(dateStr: string): string | null {
 	const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
 	if (!match) return null;
 
-	const [_, year, month, day, hours, minutes, seconds] = match;
+	const [, year, month, day, hours, minutes, seconds] = match;
 	const sec = seconds || '00'; // Default to 00 if seconds not provided
 	return `${year}${month}${day}T${hours}${minutes}${sec}`;
 }
 
 async function generateICal() {
-	const allEvents = await getAllEvents();
 	const now = new Date();
 
 	// Filter to a reasonable time range: 1 year ago to 2 years ahead
 	const rangeStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
 	const rangeEnd = new Date(now.getFullYear() + 2, now.getMonth(), now.getDate());
+
+	const allEvents = await getAllEvents(rangeStart, rangeEnd);
 
 	const lines = [
 		'BEGIN:VCALENDAR',
@@ -109,7 +110,9 @@ async function generateICal() {
 		const endFormatted = formatDateTime(event.end);
 
 		if (!startFormatted || !endFormatted) {
-			console.warn(`Skipping event ${event.id} with invalid date format - start: "${event.start}", end: "${event.end}"`);
+			console.warn(
+				`Skipping event ${event.id} with invalid date format - start: "${event.start}", end: "${event.end}"`
+			);
 			continue;
 		}
 
@@ -121,22 +124,18 @@ async function generateICal() {
 			continue;
 		}
 
-		// Skip events outside the date range
-		if (startDate > rangeEnd || endDate < rangeStart) {
-			console.log(`Skipping event ${event.id} outside date range`);
-			continue;
-		}
-
 		lines.push('BEGIN:VEVENT');
 		lines.push(`UID:${event.id}@cal72`);
-		lines.push(`DTSTAMP:${formatICalTimestamp(now)}`);
+		lines.push(`DTSTAMP:${formatICalTimestamp(event.updatedAt)}`);
 		lines.push(`SEQUENCE:${event.sequence || 0}`);
 		if (event.updatedAt) {
 			lines.push(`LAST-MODIFIED:${formatICalTimestamp(new Date(event.updatedAt))}`);
 		}
 		lines.push(`DTSTART;TZID=Europe/Berlin:${startFormatted}`);
 		lines.push(`DTEND;TZID=Europe/Berlin:${endFormatted}`);
-		lines.push(`SUMMARY:${escapeICalText(event.title)}${event.club ? " [" + escapeICalText(event.club.name) + "]" : ""}`);
+		lines.push(
+			`SUMMARY:${escapeICalText(event.title)}${event.club ? ' [' + escapeICalText(event.club.name) + ']' : ''}`
+		);
 		lines.push(`DESCRIPTION:${escapeICalText(event.description)}`);
 		lines.push('END:VEVENT');
 	}
