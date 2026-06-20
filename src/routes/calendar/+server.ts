@@ -10,11 +10,11 @@ export const GET: RequestHandler = async ({ request }) => {
 	const rangeStart = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
 	const rangeEnd = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
 
-	const events = await getAllEvents(rangeStart, rangeEnd);
+	const events = await getAllEvents(rangeStart, rangeEnd, true);
 
 	let lastModified = 0;
 	for (const e of events) {
-		const t = new Date(e.updatedAt || e.createdAt).getTime();
+		const t = new Date(e.deletedAt || e.updatedAt || e.createdAt).getTime();
 		if (t > lastModified) lastModified = t;
 	}
 	// HTTP dates have 1-second precision; truncate so the emitted
@@ -160,9 +160,13 @@ function generateICal(stamp: Date, events: CalendarEvent[]) {
 
 		lines.push('BEGIN:VEVENT');
 		lines.push(`UID:${event.id}@cal72`);
-		lines.push(`DTSTAMP:${formatICalTimestamp(event.updatedAt || event.createdAt)}`);
+		const stampDate = event.deletedAt || event.updatedAt || event.createdAt;
+		lines.push(`DTSTAMP:${formatICalTimestamp(stampDate)}`);
 		lines.push(`SEQUENCE:${event.sequence || 0}`);
-		if (event.updatedAt) {
+		if (event.deletedAt) {
+			lines.push(`LAST-MODIFIED:${formatICalTimestamp(new Date(event.deletedAt))}`);
+			lines.push('STATUS:CANCELLED');
+		} else if (event.updatedAt) {
 			lines.push(`LAST-MODIFIED:${formatICalTimestamp(new Date(event.updatedAt))}`);
 		}
 		lines.push(`DTSTART;TZID=Europe/Berlin:${startFormatted}`);

@@ -6,10 +6,11 @@ export const Events = pgTable('events', {
 	description: text('description').notNull().default(''),
 	start: text('start_time').notNull(),
 	end: text('end_time').notNull(),
-	club: integer('club').references(() => Clubs.id),
+	club: integer('club').references(() => Clubs.id, { onDelete: 'set null' }),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
-	sequence: integer('sequence').notNull().default(0)
+	sequence: integer('sequence').notNull().default(0),
+	deletedAt: timestamp('deleted_at')
 });
 
 export const Clubs = pgTable('clubs', {

@@ -1,6 +1,6 @@
 import { db } from './index';
 import { Clubs, Events } from './schema';
-import { and, desc, eq, gte, lte, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, lte, lt, isNull, sql } from 'drizzle-orm';
 
 type CreateEvent = typeof Events.$inferInsert;
 type UpdateEvent = {
@@ -27,14 +27,16 @@ const eventSelect = {
 	},
 	createdAt: Events.createdAt,
 	updatedAt: Events.updatedAt,
-	sequence: Events.sequence
+	sequence: Events.sequence,
+	deletedAt: Events.deletedAt
 };
 
-export const getAllEvents = async (from?: Date, to?: Date) => {
+export const getAllEvents = async (from?: Date, to?: Date, includeDeleted = false) => {
 	console.log('Fetching events from the database');
 	const conditions = [];
 	if (from) conditions.push(gte(Events.end, from.toISOString()));
 	if (to) conditions.push(lte(Events.start, to.toISOString()));
+	if (!includeDeleted) conditions.push(isNull(Events.deletedAt));
 	const events = await db
 		.select(eventSelect)
 		.from(Events)
@@ -51,7 +53,7 @@ export const getFutureEvents = async () => {
 		.select(eventSelect)
 		.from(Events)
 		.leftJoin(Clubs, eq(Events.club, Clubs.id))
-		.where(gte(Events.end, now))
+		.where(and(gte(Events.end, now), isNull(Events.deletedAt)))
 		.orderBy(Events.start);
 };
 
@@ -61,7 +63,7 @@ export const getPastEvents = async () => {
 		.select(eventSelect)
 		.from(Events)
 		.leftJoin(Clubs, eq(Events.club, Clubs.id))
-		.where(lt(Events.end, now))
+		.where(and(lt(Events.end, now), isNull(Events.deletedAt)))
 		.orderBy(desc(Events.start));
 };
 
@@ -135,6 +137,13 @@ export const updateEvent = async (data: UpdateEvent) => {
 };
 
 export const deleteEvent = async (id: number) => {
-	const result = await db.delete(Events).where(eq(Events.id, id)).returning();
+	const result = await db
+		.update(Events)
+		.set({
+			deletedAt: new Date(),
+			sequence: sql`${Events.sequence} + 1`
+		})
+		.where(eq(Events.id, id))
+		.returning();
 	return result[0];
 };
