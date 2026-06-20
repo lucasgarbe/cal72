@@ -1,18 +1,64 @@
 import { getAllEvents } from '$lib/server/db/events';
 import type { RequestHandler } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async () => {
-	console.log('Received GET request on +server.ts');
+type CalendarEvent = Awaited<ReturnType<typeof getAllEvents>>[number];
 
-	const ical = await generateICal();
-	return new Response(ical, {
+export const GET: RequestHandler = async ({ request }) => {
+	const now = new Date();
+
+	// Rolling window: 180 days past to 365 days future
+	const rangeStart = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+	const rangeEnd = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+	const events = await getAllEvents(rangeStart, rangeEnd);
+
+	let lastModified = 0;
+	for (const e of events) {
+		const t = new Date(e.updatedAt || e.createdAt).getTime();
+		if (t > lastModified) lastModified = t;
+	}
+	// HTTP dates have 1-second precision; truncate so the emitted
+	// Last-Modified header and the If-Modified-Since comparison stay consistent.
+	lastModified = Math.floor(lastModified / 1000) * 1000;
+	const lastModifiedDate = new Date(lastModified);
+
+	const body = generateICal(lastModifiedDate, events);
+	const etag = `"${await sha1Hex(body)}"`;
+
+	const ifNoneMatch = request.headers.get('if-none-match');
+	if (ifNoneMatch === etag) {
+		return new Response(null, {
+			status: 304,
+			headers: { ETag: etag }
+		});
+	}
+	const ifModifiedSince = request.headers.get('if-modified-since');
+	if (ifModifiedSince && new Date(ifModifiedSince).getTime() >= lastModified) {
+		return new Response(null, {
+			status: 304,
+			headers: { ETag: etag }
+		});
+	}
+
+	return new Response(body, {
 		headers: {
 			'Content-Type': 'text/calendar; charset=utf-8',
-			'Cache-Control': 'private, max-age=300',
-			'X-Published-TTL': 'PT15M'
+			'Cache-Control': 'no-cache',
+			'Content-Disposition': 'inline; filename="cal72.ics"',
+			'X-Published-TTL': 'PT15M',
+			ETag: etag,
+			'Last-Modified': lastModifiedDate.toUTCString()
 		}
 	});
 };
+
+async function sha1Hex(text: string): Promise<string> {
+	const data = new TextEncoder().encode(text);
+	const digest = await crypto.subtle.digest('SHA-1', data);
+	return Array.from(new Uint8Array(digest))
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('');
+}
 
 // Helper function to format Date to iCal format (YYYYMMDDTHHMMSSZ)
 function formatICalTimestamp(date: Date): string {
@@ -51,24 +97,15 @@ function escapeICalText(text: string): string {
 
 // Format datetime string for iCalendar (local time without conversion)
 function formatDateTime(dateStr: string): string | null {
-	// Parse the ISO string components directly (seconds are optional)
 	const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
 	if (!match) return null;
 
 	const [, year, month, day, hours, minutes, seconds] = match;
-	const sec = seconds || '00'; // Default to 00 if seconds not provided
+	const sec = seconds || '00';
 	return `${year}${month}${day}T${hours}${minutes}${sec}`;
 }
 
-async function generateICal() {
-	const now = new Date();
-
-	// Filter to a reasonable time range: 1 year ago to 2 years ahead
-	const rangeStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-	const rangeEnd = new Date(now.getFullYear() + 2, now.getMonth(), now.getDate());
-
-	const allEvents = await getAllEvents(rangeStart, rangeEnd);
-
+function generateICal(stamp: Date, events: CalendarEvent[]) {
 	const lines = [
 		'BEGIN:VCALENDAR',
 		'VERSION:2.0',
@@ -78,7 +115,7 @@ async function generateICal() {
 		'X-WR-CALNAME:Shared Calendar',
 		'X-WR-TIMEZONE:Europe/Berlin',
 		'X-WR-CALDESC:Shared Calendar for AL72',
-		`DTSTAMP:${formatICalTimestamp(now)}`,
+		`DTSTAMP:${formatICalTimestamp(stamp)}`,
 		'BEGIN:VTIMEZONE',
 		'TZID:Europe/Berlin',
 		'BEGIN:DAYLIGHT',
@@ -98,14 +135,12 @@ async function generateICal() {
 		'END:VTIMEZONE'
 	];
 
-	for (const event of allEvents) {
-		// Validate required fields
+	for (const event of events) {
 		if (!event.id || !event.title || !event.start || !event.end) {
 			console.warn(`Skipping event with missing fields:`, event.id);
 			continue;
 		}
 
-		// Validate and format dates
 		const startFormatted = formatDateTime(event.start);
 		const endFormatted = formatDateTime(event.end);
 
@@ -116,7 +151,6 @@ async function generateICal() {
 			continue;
 		}
 
-		// Validate start < end
 		const startDate = new Date(event.start);
 		const endDate = new Date(event.end);
 		if (startDate >= endDate) {
@@ -126,7 +160,7 @@ async function generateICal() {
 
 		lines.push('BEGIN:VEVENT');
 		lines.push(`UID:${event.id}@cal72`);
-		lines.push(`DTSTAMP:${formatICalTimestamp(event.updatedAt)}`);
+		lines.push(`DTSTAMP:${formatICalTimestamp(event.updatedAt || event.createdAt)}`);
 		lines.push(`SEQUENCE:${event.sequence || 0}`);
 		if (event.updatedAt) {
 			lines.push(`LAST-MODIFIED:${formatICalTimestamp(new Date(event.updatedAt))}`);

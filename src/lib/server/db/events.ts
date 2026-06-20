@@ -14,35 +14,6 @@ type UpdateEvent = {
 type CreateClub = typeof Clubs.$inferInsert;
 type UpdateClub = { id: string; name: string; color: string | null };
 
-export const getAllEvents = async (from?: Date, to?: Date) => {
-	console.log('Fetching events from the database');
-	const conditions = [];
-	if (from) conditions.push(gte(Events.end, from.toISOString()));
-	if (to) conditions.push(lte(Events.start, to.toISOString()));
-	const events = await db
-		.select({
-			id: Events.id,
-			title: Events.title,
-			description: Events.description,
-			start: Events.start,
-			end: Events.end,
-			club: {
-				id: Clubs.id,
-				name: Clubs.name,
-				color: Clubs.color
-			},
-			createdAt: Events.createdAt,
-			updatedAt: Events.updatedAt,
-			sequence: Events.sequence
-		})
-		.from(Events)
-		.leftJoin(Clubs, eq(Events.club, Clubs.id))
-		.where(conditions.length > 0 ? and(...conditions) : undefined)
-		.orderBy(Events.start);
-	console.log('Fetched events:', events.length);
-	return events;
-};
-
 const eventSelect = {
 	id: Events.id,
 	title: Events.title,
@@ -57,6 +28,21 @@ const eventSelect = {
 	createdAt: Events.createdAt,
 	updatedAt: Events.updatedAt,
 	sequence: Events.sequence
+};
+
+export const getAllEvents = async (from?: Date, to?: Date) => {
+	console.log('Fetching events from the database');
+	const conditions = [];
+	if (from) conditions.push(gte(Events.end, from.toISOString()));
+	if (to) conditions.push(lte(Events.start, to.toISOString()));
+	const events = await db
+		.select(eventSelect)
+		.from(Events)
+		.leftJoin(Clubs, eq(Events.club, Clubs.id))
+		.where(conditions.length > 0 ? and(...conditions) : undefined)
+		.orderBy(Events.start);
+	console.log('Fetched events:', events.length);
+	return events;
 };
 
 export const getFutureEvents = async () => {
