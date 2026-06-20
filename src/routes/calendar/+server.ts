@@ -1,10 +1,18 @@
-import { getAllEvents } from '$lib/server/db/events';
+import { getAllEvents, pruneDeletedEvents } from '$lib/server/db/events';
 import type { RequestHandler } from '@sveltejs/kit';
 
 type CalendarEvent = Awaited<ReturnType<typeof getAllEvents>>[number];
 
+const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+let lastPruneAt = 0;
+
 export const GET: RequestHandler = async ({ request }) => {
 	const now = new Date();
+
+	if (now.getTime() - lastPruneAt > PRUNE_INTERVAL_MS) {
+		lastPruneAt = now.getTime();
+		pruneDeletedEvents().catch((err) => console.error('prune failed:', err));
+	}
 
 	// Rolling window: 180 days past to 365 days future
 	const rangeStart = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);

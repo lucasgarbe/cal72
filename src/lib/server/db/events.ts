@@ -1,6 +1,6 @@
 import { db } from './index';
 import { Clubs, Events } from './schema';
-import { and, desc, eq, gte, lte, lt, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, lte, lt, isNull, isNotNull, sql } from 'drizzle-orm';
 
 type CreateEvent = typeof Events.$inferInsert;
 type UpdateEvent = {
@@ -146,4 +146,13 @@ export const deleteEvent = async (id: number) => {
 		.where(eq(Events.id, id))
 		.returning();
 	return result[0];
+};
+
+export const pruneDeletedEvents = async (olderThanDays = 180) => {
+	const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+	const result = await db
+		.delete(Events)
+		.where(and(isNotNull(Events.deletedAt), lt(Events.end, cutoff.toISOString())))
+		.returning();
+	return result.length;
 };
