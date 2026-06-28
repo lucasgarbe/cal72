@@ -29,3 +29,6 @@ vite.config.ts.timestamp-*
 
 # Fallow
 .fallow
+
+# Local binaries
+.bin/

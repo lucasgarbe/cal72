@@ -1,0 +1,161 @@
+rules:
+  - id: sql-injection-template-literal
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $DB.query(`...${$USER_INPUT}...`)
+          - pattern: |
+              $DB.execute(`...${$USER_INPUT}...`)
+          - pattern: |
+              sql`...${$USER_INPUT}...`
+      - pattern-not: |
+          $DB.query(`...${$LITERAL}...`)
+    message: >
+      Possible SQL injection detected. User-controlled input is being
+      interpolated directly into a SQL query string. Use parameterized
+      queries or an ORM query builder instead.
+    languages: [typescript, javascript]
+    severity: ERROR
+    metadata:
+      category: security
+      subcategory: injection
+      confidence: MEDIUM
+
+  - id: sql-injection-string-concat
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $DB.query("..." + $USER_INPUT + "...")
+          - pattern: |
+              $DB.execute("..." + $USER_INPUT + "...")
+    message: >
+      Possible SQL injection via string concatenation. Use parameterized
+      queries instead of concatenating user input into SQL strings.
+    languages: [typescript, javascript]
+    severity: ERROR
+    metadata:
+      category: security
+      subcategory: injection
+      confidence: MEDIUM
+
+  - id: eval-usage
+    pattern: eval($X)
+    message: >
+      Use of eval() is a security risk. It can execute arbitrary code
+      and may lead to code injection vulnerabilities.
+    languages: [typescript, javascript]
+    severity: ERROR
+    metadata:
+      category: security
+      subcategory: code-injection
+      confidence: HIGH
+
+  - id: function-constructor
+    pattern: new Function($X)
+    message: >
+      Using the Function constructor with dynamic input is equivalent
+      to eval() and poses a code injection risk.
+    languages: [typescript, javascript]
+    severity: ERROR
+    metadata:
+      category: security
+      subcategory: code-injection
+      confidence: HIGH
+
+  - id: hardcoded-secret-api-key
+    patterns:
+      - pattern-either:
+          - pattern: |
+              const $KEY = "...API_KEY..."
+          - pattern: |
+              const $KEY = "...SECRET..."
+          - pattern: |
+              const $KEY = "...PASSWORD..."
+          - pattern: |
+              const $KEY = "...TOKEN..."
+          - pattern: |
+              let $KEY = "...API_KEY..."
+          - pattern: |
+              let $KEY = "...SECRET..."
+          - pattern: |
+              let $KEY = "...PASSWORD..."
+          - pattern: |
+              let $KEY = "...TOKEN..."
+    message: >
+      Possible hardcoded secret detected. Secrets should be stored in
+      environment variables, not in source code.
+    languages: [typescript, javascript]
+    severity: WARNING
+    metadata:
+      category: security
+      subcategory: secrets
+      confidence: LOW
+
+  - id: xss-innerhtml
+    patterns:
+      - pattern-either:
+          - pattern: $EL.innerHTML = $X
+          - pattern: $EL.outerHTML = $X
+    message: >
+      Setting innerHTML/outerHTML with dynamic content can lead to XSS.
+      Use textContent or a sanitization library instead.
+    languages: [typescript, javascript]
+    severity: WARNING
+    metadata:
+      category: security
+      subcategory: xss
+      confidence: MEDIUM
+
+  - id: xss-document-write
+    patterns:
+      - pattern-either:
+          - pattern: document.write($X)
+          - pattern: document.writeln($X)
+    message: >
+      document.write() can lead to XSS vulnerabilities when used with
+      user-controlled input. Use DOM manipulation methods instead.
+    languages: [typescript, javascript]
+    severity: WARNING
+    metadata:
+      category: security
+      subcategory: xss
+      confidence: MEDIUM
+
+  - id: xss-dangerously-set-innerhtml
+    pattern: |
+      <$_ dangerouslySetInnerHTML={$X} />
+    message: >
+      dangerouslySetInnerHTML can lead to XSS. Ensure input is sanitized
+      before rendering.
+    languages: [typescript, javascript]
+    severity: WARNING
+    metadata:
+      category: security
+      subcategory: xss
+      confidence: MEDIUM
+
+  - id: insecure-random
+    patterns:
+      - pattern-either:
+          - pattern: Math.random()
+    message: >
+      Math.random() is not cryptographically secure. Use
+      crypto.getRandomValues() for security-sensitive operations.
+    languages: [typescript, javascript]
+    severity: INFO
+    metadata:
+      category: security
+      subcategory: cryptography
+      confidence: LOW
+
+  - id: node-env-hardcoded
+    pattern: process.env.$KEY = $VALUE
+    message: >
+      Assigning to process.env at runtime may indicate hardcoded
+      configuration. Use environment variable loading from .env files.
+    languages: [typescript, javascript]
+    severity: INFO
+    metadata:
+      category: security
+      subcategory: configuration
+      confidence: LOW
