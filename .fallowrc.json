@@ -1,0 +1,35 @@
+{
+	"$schema": "https://fallow.dev/config-schema.json",
+	"entry": [
+		"src/routes/**/+page.server.ts",
+		"src/routes/**/+page.ts",
+		"src/routes/**/+layout.server.ts",
+		"src/routes/**/+layout.ts",
+		"src/routes/**/+server.ts"
+	],
+	"ignorePatterns": [
+		".svelte-kit/**",
+		"build/**",
+		"node_modules/**",
+		".fallow/**",
+		"drizzle/**"
+	],
+	"rules": {
+		"unused-files": "warn",
+		"unused-exports": "warn",
+		"unused-dependencies": "warn",
+		"unused-dev-dependencies": "warn",
+		"circular-dependencies": "warn",
+		"unresolved-imports": "warn"
+	},
+	"duplicates": {
+		"enabled": true,
+		"minLines": 6,
+		"minOccurrences": 2
+	},
+	"health": {
+		"maxCyclomatic": 50,
+		"maxCognitive": 40,
+		"maxCrap": 500
+	}
+}
